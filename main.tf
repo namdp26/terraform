@@ -1,11 +1,25 @@
 provider "kubernetes" {
-  config_path    = "~/.kube/config"
-  config_context = "my-context"
+  config_path    = var.kube_config
+  config_context = var.k8s_context
 }
+
 provider "helm" {
   kubernetes {
-    config_path    = "~/.kube/config"
-    config_context = "my-context"
+    config_path    = var.kube_config
+    config_context = var.k8s_context
+  }
+}
+
+terraform {
+  required_providers {
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "1.13.0"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "2.3.0"
+    }
   }
 }
 
@@ -14,6 +28,7 @@ module "cert_manager" {
   cluster_issuer_email                   = var.cluster_issuer_email
   cluster_issuer_name                    = var.cluster_issuer_name
   cluster_issuer_private_key_secret_name = var.cluster_issuer_private_key_secret_name
+  solvers                                = var.solvers
 }
 
 module "certificate" {
@@ -22,7 +37,7 @@ module "certificate" {
   dns_names         = var.dns_names
   namespace         = var.namespace_name
   issuer_name       = var.cluster_issuer_name
-  issuer_kind       = "ClusterIssuer"
+  issuer_kind       = "Certificate"
   secret_name       = "gitlab-zinza"
   issuer_group      = var.issuer_group
 }

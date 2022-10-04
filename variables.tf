@@ -1,3 +1,14 @@
+## K8s config
+variable "kube_config" {
+  type = string
+  default = "/home/namdp/.config/Lens/kubeconfigs/7c9058cc-dffa-4801-8d24-91d88360f661"
+}
+
+variable "k8s_context" {
+  type = string
+  default = "kubernetes-admin@k8s.local"
+}
+
 ## Cert-manager
 
 variable "namespace_name" {
@@ -13,7 +24,7 @@ variable "cluster_issuer_email" {
 variable "cluster_issuer_name" {
   description = "Cluster Issuer Name, used for annotations"
   type        = string
-  default     = "staging-letsencrypt"
+  default     = "cert-manager"
 }
 
 variable "cluster_issuer_private_key_secret_name" {
@@ -34,6 +45,30 @@ variable "issuer_group" {
   type        = string
   description = "issuer group"
   default     = "cert-manager.io"
+}
+
+variable "chart_version" {
+  type        = string
+  description = "HELM Chart Version for cert-manager"
+  default     = "1.7.1"
+}
+
+variable "cluster_issuer_server" {
+  description = "The ACME server URL"
+  type        = string
+  default     = "https://acme-v02.api.letsencrypt.org/directory"
+}
+
+variable "solvers" {
+  description = "List of Cert manager solvers. For a complex example please look at the Readme"
+  type        = any
+  default = [{
+    http01 = {
+      ingress = {
+        class = "nginx"
+      }
+    }
+  }]
 }
 
 ### Istio
