@@ -72,6 +72,7 @@ module "certificate" {
 }
 
 module "istio_operator" {
+  count  = var.enable_istio_operator || var.enable_kiali_operator ? 1 : 0
   source = "./modules/istio-operator"
 
   create_istio_system_namespace   = var.create_istio_system_namespace
@@ -94,9 +95,9 @@ module "istio_operator" {
   istio_system_namespace          = var.istio_system_namespace
   istio_trust_domain              = var.istio_trust_domain
   istio_gateway_certificate_name  = "istio-ingressgateway-tls"
-  # istio_gateway_certificate_hosts = ["*.${var.service_domain}"]
+  istio_gateway_certificate_hosts = ["*.${var.service_domain}"]
   istio_gateway_certificate_issuer = {
-    group = var.issuer_group
+    group = "cert-manager.io"
     kind  = "ClusterIssuer"
     name  = "external"
   }
@@ -110,8 +111,9 @@ module "istio_operator" {
   kiali_operator_settings         = var.kiali_operator_settings
   kiali_operator_values           = var.kiali_operator_values
   kiali_namespace                 = var.kiali_namespace
-  # kiali_gateway_hosts             = ["kiali.${var.service_domain}"]
-  kiali_gateway_tls_secret = "istio-ingressgateway-tls"
-  timeout                  = var.istio_operator_timeout
+  kiali_gateway_hosts             = ["kiali.${var.service_domain}"]
+  kiali_gateway_tls_secret        = "istio-ingressgateway-tls"
+  timeout                         = var.istio_operator_timeout
 }
+
 
