@@ -1,12 +1,20 @@
 provider "kubernetes" {
-  config_path    = var.kube_config
-  config_context = var.k8s_context
+  config_context         = var.k8s_context
+  config_path            = var.kube_config
+  host                   = var.host
+  client_certificate     = base64decode(var.client_certificate)
+  client_key             = base64decode(var.client_key)
+  cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
 }
 
 provider "helm" {
   kubernetes {
-    config_path    = var.kube_config
-    config_context = var.k8s_context
+    config_context         = var.k8s_context
+    config_path            = var.kube_config
+    host                   = var.host
+    client_certificate     = base64decode(var.client_certificate)
+    client_key             = base64decode(var.client_key)
+    cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
   }
 }
 
@@ -25,21 +33,42 @@ terraform {
 
 module "cert_manager" {
   source                                 = "./modules/cert-manager-k8s"
-  cluster_issuer_email                   = var.cluster_issuer_email
+  cluster_issuer_email                   = "hunglq@zinza.com.vn"
   cluster_issuer_name                    = var.cluster_issuer_name
   cluster_issuer_private_key_secret_name = var.cluster_issuer_private_key_secret_name
   solvers                                = var.solvers
+  certificates = {
+    "gitlab-tls" = {
+      dns_names   = ["gitlab.example.com"]
+      namespace   = "gitlab"
+      secret_name = "gitlab-tls"
+    }
+  }
 }
 
 module "certificate" {
-  source            = "./modules/cert-manager-k8s/modules/_certificate"
-  name              = "gitlab-zinza"
-  dns_names         = var.dns_names
-  namespace         = var.namespace_name
-  issuer_name       = var.cluster_issuer_name
-  issuer_kind       = "Certificate"
-  secret_name       = "gitlab-zinza"
-  issuer_group      = var.issuer_group
+  for_each = { for k, v in var.certificates : k => v }
+  source   = "./modules/cert-manager-k8s/modules/_certificate"
+
+  name                  = each.key
+  namespace             = try(each.value.namespace, var.namespace_name)
+  secret_name           = try(each.value.secret_name, "${each.key}-tls")
+  secret_annotations    = try(each.value.secret_annotations, {})
+  secret_labels         = try(each.value.secret_labels, {})
+  duration              = try(each.value.duration, "2160h")
+  renew_before          = try(each.value.renew_before, "360h")
+  organizations         = try(each.value.organizations, [])
+  is_ca                 = try(each.value.is_ca, false)
+  private_key_algorithm = try(each.value.private_key_algorithm, "RSA")
+  private_key_encoding  = try(each.value.private_key_encoding, "PKCS1")
+  private_key_size      = try(each.value.private_key_size, 2048)
+  usages                = try(each.value.usages, ["server auth", "client auth", ])
+  dns_names             = each.value.dns_names
+  uris                  = try(each.value.uris, [])
+  ip_addresses          = try(each.value.ip_addresses, [])
+  issuer_name           = try(each.value.issuer_name, var.cluster_issuer_name)
+  issuer_kind           = try(each.value.issuer_kind, "ClusterIssuer")
+  issuer_group          = try(each.value.issuer_group, "")
 }
 
 module "istio_operator" {
@@ -82,7 +111,7 @@ module "istio_operator" {
   kiali_operator_values           = var.kiali_operator_values
   kiali_namespace                 = var.kiali_namespace
   # kiali_gateway_hosts             = ["kiali.${var.service_domain}"]
-  kiali_gateway_tls_secret        = "istio-ingressgateway-tls"
-  timeout                         = var.istio_operator_timeout
+  kiali_gateway_tls_secret = "istio-ingressgateway-tls"
+  timeout                  = var.istio_operator_timeout
 }
 
