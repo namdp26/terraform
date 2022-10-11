@@ -37,7 +37,7 @@ variable "timeout" {
 
 ### Istio Settings
 variable "create_istio_system_namespace" {
-  default     = null
+  default     = true
   description = "Create a namespace where istio components will be installed."
   type        = bool
 }
@@ -73,7 +73,7 @@ variable "istio_chart_version" {
 }
 
 variable "istio_cluster_name" {
-  default     = null
+  default     = "istio-cluster"
   description = "The name of the kubernetes cluster where Istio is being installed."
   type        = string
 }
@@ -85,13 +85,13 @@ variable "istio_ingress_gateway_service_annotations" {
 }
 
 variable "istio_mesh_id" {
-  default     = null
+  default     = "1"
   description = "The ID used by the Istio mesh. This is also the ID of the StreamNative Cloud Pool used for the workload environment."
   type        = string
 }
 
 variable "istio_network" {
-  default     = null
+  default     = "network1"
   description = "The network used for the Istio mesh."
   type        = string
 }
@@ -137,7 +137,7 @@ variable "istio_release_name" {
 }
 
 variable "istio_revision_tag" {
-  default     = null
+  default     = "istio.io/rev"
   description = "The revision tag value use for the Istio label \"istio.io/rev\"."
   type        = string
 }
